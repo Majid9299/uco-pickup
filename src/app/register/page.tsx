@@ -10,7 +10,7 @@ import { Generator } from "@/lib/types";
 function scanUrl(generatorId: string) {
   if (typeof window === "undefined") return "";
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-  return `${window.location.origin}${basePath}/scan/${generatorId}/`;
+  return `${window.location.origin}${basePath}/scan/?g=${generatorId}`;
 }
 
 export default function RegisterPage() {
@@ -34,8 +34,8 @@ export default function RegisterPage() {
     });
   }
 
-  function submit() {
-    const generator = addGenerator({
+  async function submit() {
+    const generator = await addGenerator({
       name: name.trim(),
       whatsapp: whatsapp.trim(),
       governorate,

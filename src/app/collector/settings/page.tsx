@@ -4,18 +4,43 @@ import { useState } from "react";
 import Link from "next/link";
 import { Header } from "@/components/Header";
 import { useData } from "@/components/DataProvider";
-import { CURRENT_COLLECTOR_ID } from "@/lib/mock-data";
+import { useCollectorSession } from "@/components/useCollectorSession";
 
 export default function CollectorSettingsPage() {
+  const { collectorId } = useCollectorSession();
   const { collectors, setCollectorWhatsapp } = useData();
-  const collector = collectors.find((c) => c.id === CURRENT_COLLECTOR_ID);
+  const collector = collectors.find((c) => c.id === collectorId);
+
+  // مزامنة الحقل المحلي مع رقم واتساب المجمّع الفعلي بمجرد وصوله من القاعدة،
+  // بنمط React الموصى به لتعديل الحالة أثناء الرندر بدل useEffect+setState
+  const [syncedWhatsapp, setSyncedWhatsapp] = useState(collector?.whatsapp);
   const [whatsapp, setWhatsapp] = useState(collector?.whatsapp ?? "");
+  if (collector?.whatsapp !== syncedWhatsapp) {
+    setSyncedWhatsapp(collector?.whatsapp);
+    setWhatsapp(collector?.whatsapp ?? "");
+  }
+
   const [saved, setSaved] = useState(false);
 
-  function submit() {
-    setCollectorWhatsapp(CURRENT_COLLECTOR_ID, whatsapp.trim());
+  async function submit() {
+    if (!collectorId) return;
+    await setCollectorWhatsapp(collectorId, whatsapp.trim());
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+  }
+
+  if (!collectorId) {
+    return (
+      <div className="flex min-h-screen flex-col bg-neutral-50">
+        <Header />
+        <main className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center gap-3 px-5 py-8 text-center">
+          <p className="text-sm text-neutral-500">اختر شركتك أولًا من لوحة المجمّع</p>
+          <Link href="/collector" className="text-sm font-bold text-brand-700">
+            ← لوحة المجمّع
+          </Link>
+        </main>
+      </div>
+    );
   }
 
   return (

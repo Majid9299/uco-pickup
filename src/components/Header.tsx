@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Mark } from "./Mark";
+import { useData } from "./DataProvider";
 
 const NAV = [
   { href: "/", label: "الرئيسية" },
@@ -13,8 +14,14 @@ const NAV = [
 
 export function Header() {
   const pathname = usePathname();
+  const { configured } = useData();
   return (
     <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white/90 backdrop-blur">
+      {!configured && (
+        <div className="bg-red-600 px-5 py-1.5 text-center text-[11px] font-bold text-white">
+          ⚠️ القاعدة غير مربوطة بعد (NEXT_PUBLIC_SUPABASE_URL/ANON_KEY) — البيانات لن تُحفَظ
+        </div>
+      )}
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-5 py-3">
         <Link href="/" className="flex items-center gap-2">
           <Mark size={30} />
