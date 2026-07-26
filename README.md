@@ -1,36 +1,44 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# نظام إدارة طلبات سحب زيت الطهي المستخدم (UCO Pickup Management)
 
-## Getting Started
+نموذج تشغيلي (Next.js + TypeScript + Tailwind) لإدارة عملية سحب زيت الطهي
+المستخدم من المولّدين (مطاعم، فنادق) بواسطة مجمّعين، مع تتبّع الطلب والكمية
+والسعر والعمولة.
 
-First, run the development server:
+**مشروع مستقل بالكامل** — لا علاقة له بأي مشروع آخر.
+
+## الفكرة
+
+1. مندوب ميداني يسجّل مولّدًا جديدًا (`/register`) — النظام يصدر باركود خاص به.
+2. أي مسح لهذا الباركود (`/scan/[generatorId]`) ينشئ تلقائيًا طلب سحب جديد
+   بدون أي تطبيق أو تسجيل دخول من طرف المولّد.
+3. المجمّع (`/collector`) يشوف الطلبات المعلّقة، يفلترها حسب المحافظة/الولاية،
+   يجمّعها في مسار واحد يفتح في خرائط قوقل بضغطة زر، ويسجّل الكمية والسعر عند
+   التنفيذ.
+4. الإدارة (`/admin`) تشوف كل المعاملات وتحسب تلقائيًا مستحقات كل مجمّع:
+   عمولة ٢ ر.ع لكل طن + ضريبة قيمة مضافة ٥٪.
+
+## التشغيل محليًا
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## البناء والنشر (GitHub Pages)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+المشروع يُصدَّر كموقع ثابت بالكامل (`output: "export"`) — لا يحتاج سيرفر.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+GITHUB_PAGES_BUILD=true npm run build
+```
 
-## Learn More
+## قيود النموذج الحالي
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- كل البيانات تعيش في ذاكرة المتصفح (React Context) فقط — تتصفّر عند تحديث
+  الصفحة، ولا تُشارَك بين الأجهزة. للاستخدام الفعلي لازم باك-إند حقيقي
+  (قاعدة بيانات + API) يستبدل `src/components/DataProvider.tsx`.
+- إشعارات الواتساب محاكاة بصرية فقط (`WhatsAppPreview`) — لا يوجد اتصال فعلي
+  بـ WhatsApp Business API.
+- باركودات المولّدين المُنشَأة من `/register` أثناء التصفح تعمل فقط داخل نفس
+  الجلسة؛ المولّدات الثلاثة التجريبية (`gen-1`, `gen-2`, `gen-3`) فقط مُصدَّرة
+  كصفحات ثابتة على GitHub Pages وتعمل بشكل دائم.
