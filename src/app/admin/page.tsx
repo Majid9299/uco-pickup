@@ -6,6 +6,7 @@ import { useData } from "@/components/DataProvider";
 import { calculateCommission, round } from "@/lib/commission";
 import { GOVERNORATES } from "@/lib/mock-data";
 import { Collector } from "@/lib/types";
+import { WhatsAppAdminPanel } from "@/components/WhatsAppAdminPanel";
 
 function StatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
@@ -272,6 +273,8 @@ export default function AdminPage() {
             ))}
           </div>
         </section>
+
+        <WhatsAppAdminPanel />
       </main>
     </div>
   );

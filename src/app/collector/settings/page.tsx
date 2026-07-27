@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Header } from "@/components/Header";
 import { useData } from "@/components/DataProvider";
 import { useCollectorSession } from "@/components/useCollectorSession";
+import { NotifyWhatsAppPanel } from "@/components/NotifyWhatsAppPanel";
 
 export default function CollectorSettingsPage() {
   const { collectorId } = useCollectorSession();
@@ -52,19 +53,24 @@ export default function CollectorSettingsPage() {
             ← لوحة المجمّع
           </Link>
           <h1 className="mt-2 text-lg font-extrabold text-neutral-900">إعدادات الواتساب</h1>
-          <p className="mt-1 text-sm text-neutral-500">
-            الرقم اللي بترسل عليه إشعارات تأكيد كل عملية سحب
-          </p>
         </div>
 
+        <NotifyWhatsAppPanel collectorId={collectorId} />
+
         <div className="flex flex-col gap-1.5 rounded-2xl border border-neutral-200 bg-white p-4">
-          <label className="text-xs font-semibold text-neutral-500">رقم الواتساب</label>
+          <label className="text-xs font-semibold text-neutral-500">
+            رقم واتساب للعرض فقط (اختياري)
+          </label>
+          <p className="text-[11px] text-neutral-400">
+            يظهر لك ولإدارة إنفير كرقم تواصل — لا يُستخدم لإرسال الإشعارات، الإرسال
+            الفعلي من الرقم المربوط بالأعلى
+          </p>
           <input
             value={whatsapp}
             onChange={(e) => setWhatsapp(e.target.value)}
             placeholder="+968 9xxx xxxx"
             dir="ltr"
-            className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none"
+            className="mt-1 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none"
           />
         </div>
 

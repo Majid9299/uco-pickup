@@ -3,11 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Header } from "@/components/Header";
-import { WhatsAppPreview } from "@/components/WhatsAppPreview";
 import { useData } from "@/components/DataProvider";
 import { useCollectorSession } from "@/components/useCollectorSession";
 import { GOVERNORATES } from "@/lib/mock-data";
 import { buildGoogleMapsRouteUrl } from "@/lib/maps";
+import { sendGeneratorNotification } from "@/lib/notify";
 import { PickupRequest } from "@/lib/types";
 
 function PickupCompleteForm({
@@ -118,7 +118,7 @@ function CollectorDashboard({
   collectorId: string;
   onSwitch: () => void;
 }) {
-  const { requests, collectors, completePickup } = useData();
+  const { requests, collectors, generators, completePickup } = useData();
   const collector = collectors.find((c) => c.id === collectorId);
 
   const [governorate, setGovernorate] = useState("");
@@ -126,6 +126,9 @@ function CollectorDashboard({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [completingId, setCompletingId] = useState<string | null>(null);
   const [lastCompleted, setLastCompleted] = useState<PickupRequest | null>(null);
+  const [notifyResult, setNotifyResult] = useState<
+    { ok: true; text: string } | { ok: false; message: string } | null
+  >(null);
 
   const myRequests = requests.filter((r) => r.collectorId === collectorId);
   const pending = myRequests.filter((r) => r.status === "pending");
@@ -170,12 +173,13 @@ function CollectorDashboard({
       next.delete(request.id);
       return next;
     });
-    setLastCompleted({
-      ...request,
-      liters,
-      pricePerLiterOMR: price,
-      totalOMR: Math.round(liters * price * 1000) / 1000,
-    });
+    const totalOMR = Math.round(liters * price * 1000) / 1000;
+    setLastCompleted({ ...request, liters, pricePerLiterOMR: price, totalOMR });
+
+    const generator = generators.find((g) => g.id === request.generatorId);
+    const text = `تم استلام ${liters} لتر من الزيت المستخدم بسعر ${price} ر.ع/لتر — الإجمالي ${totalOMR} ر.ع. شكرًا لتعاونكم 🙏`;
+    const result = await sendGeneratorNotification(collectorId, generator?.whatsapp ?? "", text);
+    setNotifyResult(result.ok ? { ok: true, text } : { ok: false, message: result.message });
   }
 
   return (
@@ -290,21 +294,31 @@ function CollectorDashboard({
         </button>
       </div>
 
-      {lastCompleted && (
-        <WhatsAppPreview
-          messages={[
-            {
-              to: collector?.whatsapp || "—",
-              toLabel: "المجمّع",
-              text: `تم تأكيد سحب ${lastCompleted.liters} لتر من ${lastCompleted.generatorName} بمبلغ ${lastCompleted.totalOMR} ر.ع ✅`,
-            },
-            {
-              to: "رقم المولّد المسجّل",
-              toLabel: "المولّد",
-              text: `تم استلام ${lastCompleted.liters} لتر من الزيت المستخدم بسعر ${lastCompleted.pricePerLiterOMR} ر.ع/لتر — الإجمالي ${lastCompleted.totalOMR} ر.ع. شكرًا لتعاونكم 🙏`,
-            },
-          ]}
-        />
+      {lastCompleted && notifyResult && (
+        <div
+          className={`rounded-2xl border p-3 text-xs ${
+            notifyResult.ok
+              ? "border-emerald-100 bg-emerald-50 text-emerald-700"
+              : "border-amber-200 bg-amber-50 text-amber-700"
+          }`}
+        >
+          {notifyResult.ok ? (
+            <>
+              <p className="mb-1.5 font-bold">✅ أُرسل إشعار واتساب حقيقي لـ {lastCompleted.generatorName}</p>
+              <div className="rounded-xl rounded-tr-sm bg-white px-3 py-2 leading-relaxed text-neutral-700">
+                {notifyResult.text}
+              </div>
+            </>
+          ) : (
+            <p className="font-bold">
+              ⚠️ ما انرسل إشعار واتساب: {notifyResult.message}
+              {" — "}
+              <Link href="/collector/settings" className="underline">
+                اربط رقمك من الإعدادات
+              </Link>
+            </p>
+          )}
+        </div>
       )}
 
       <div className="rounded-2xl border border-neutral-200 bg-white p-4">

@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // مشروع Node منفصل بتبعياته وإعداداته الخاصة — لازم يُفحص لوحده
+    // (npm run lint من داخل whatsapp-service/) مو ضمن فحص تطبيق Next.js
+    "whatsapp-service/**",
   ]),
 ]);
 
