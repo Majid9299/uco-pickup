@@ -4,6 +4,20 @@ import { WhatsappService, resolveSessionDir, resolveNotifySessionsBaseDir } from
 import { OtpService } from "./otp.service";
 import { NotifyManager } from "./notify.manager";
 
+// أهم إصلاح لمشكلة "الربط ينقطع": مكتبة Baileys ترمي أحيانًا أخطاء غير معالَجة
+// من داخل معالجات WebSocket (مثل "Timed Out" أثناء رفع مفاتيح ما قبل الاتصال)،
+// وهذه الأخطاء تحدث خارج أي try/catch نكتبه فتقتل عملية Node بالكامل → Railway
+// يعيد التشغيل → نفس الخطأ = حلقة انهيار. نلتقطها هنا على مستوى العملية ونتجاهلها
+// (منطق إعادة الاتصال بالمهلة التصاعدية داخل WhatsappService يتكفّل بالتعافي).
+process.on("uncaughtException", (err) => {
+  // eslint-disable-next-line no-console
+  console.error("[uncaughtException] تم تجاهله للحفاظ على استمرار الخدمة:", (err as Error)?.message ?? err);
+});
+process.on("unhandledRejection", (reason) => {
+  // eslint-disable-next-line no-console
+  console.error("[unhandledRejection] تم تجاهله للحفاظ على استمرار الخدمة:", (reason as Error)?.message ?? reason);
+});
+
 const app = express();
 app.use(express.json());
 app.use(cors({ origin: process.env.ALLOWED_ORIGIN ?? "*" }));
