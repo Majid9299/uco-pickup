@@ -116,7 +116,10 @@ app.post("/notify/send", async (req, res) => {
     res.status(400).json({ message: "الرسالة أطول من المسموح" });
     return;
   }
-  if (overLimit(`ip:${req.ip}`, NOTIFY_PER_IP_HOUR) || overLimit(`phone:${phone}`, NOTIFY_PER_PHONE_HOUR)) {
+  // سيرفر OPS (يحمل ADMIN_TOKEN) يرسل لكل المجمّعين من عنوان واحد — فلا حدّ
+  // لكل IP عليه، ويبقى حدّ كل رقم مستلم.
+  const trusted = req.get("x-admin-token") === ADMIN_TOKEN && ADMIN_TOKEN !== "change-me";
+  if ((!trusted && overLimit(`ip:${req.ip}`, NOTIFY_PER_IP_HOUR)) || overLimit(`phone:${phone}`, NOTIFY_PER_PHONE_HOUR)) {
     res.status(429).json({ message: "تجاوزت عدد الرسائل المسموح في الساعة، حاول لاحقًا" });
     return;
   }
