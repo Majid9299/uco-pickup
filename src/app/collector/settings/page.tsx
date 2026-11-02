@@ -7,7 +7,6 @@ import { PhoneInput } from "@/components/PhoneInput";
 import { useData } from "@/components/DataProvider";
 import { useCollectorSession } from "@/components/useCollectorSession";
 import { useLanguage } from "@/components/LanguageProvider";
-import { NotifyWhatsAppPanel } from "@/components/NotifyWhatsAppPanel";
 
 export default function CollectorSettingsPage() {
   const { t } = useLanguage();
@@ -74,16 +73,14 @@ export default function CollectorSettingsPage() {
           <h1 className="mt-2 text-lg font-extrabold text-neutral-900">{t("الإعدادات", "Settings")}</h1>
         </div>
 
-        <NotifyWhatsAppPanel collectorId={collectorId} />
-
         <div className="flex flex-col gap-1.5 rounded-2xl border border-neutral-200 bg-white p-4">
           <label className="text-xs font-semibold text-neutral-500">
-            {t("رقم واتساب للعرض فقط (اختياري)", "Display-only WhatsApp number (optional)")}
+            {t("رقم واتساب الشركة (للدخول واستلام الإشعارات)", "Company WhatsApp number (for login and notifications)")}
           </label>
           <p className="text-[11px] text-neutral-400">
             {t(
-              "يظهر لك ولإدارة إنفير كرقم تواصل — لا يُستخدم لإرسال الإشعارات، الإرسال الفعلي من الرقم المربوط بالأعلى",
-              "Shown to you and Invare admin as a contact number — not used to send notifications, actual sending is from the number linked above"
+              "لا تحتاج ربط واتساب — كل الرسائل تُرسل من رقم إنفير. هذا رقمك الذي يصله رمز الدخول والإشعارات",
+              "No WhatsApp linking needed — all messages are sent from Invare's number. This is your number for login codes and notifications"
             )}
           </p>
           <div className="mt-1">

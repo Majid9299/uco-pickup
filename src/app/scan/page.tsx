@@ -32,7 +32,7 @@ function ScanContent() {
       const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
       const link = `${window.location.origin}${basePath}/contract/?g=${generator.id}`;
       const text = `📄 لتوثيق تعاملك، يرجى مراجعة وتوقيع العقد الإلكتروني (الإقرار الذاتي) لمنشأتك:\n${link}`;
-      sendGeneratorNotification(generator.collectorId, generator.whatsapp, text).catch(() => {});
+      sendGeneratorNotification(generator.whatsapp, text).catch(() => {});
     }
   }, [generator, generatorId, createRequestForGenerator]);
 

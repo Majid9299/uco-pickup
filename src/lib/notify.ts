@@ -1,7 +1,8 @@
 const SERVICE_URL = process.env.NEXT_PUBLIC_WHATSAPP_SERVICE_URL ?? "";
 
+// كل الرسائل (للمولّد والمندوب والمجمّع) تُرسل من رقم واتساب الشركة الواحد
+// المربوط من لوحة الإدارة — المجمّعون لا يربطون أرقامهم (المالك 2026-11-02).
 export async function sendGeneratorNotification(
-  collectorId: string,
   phone: string,
   text: string
 ): Promise<{ ok: true } | { ok: false; message: string }> {
@@ -12,7 +13,7 @@ export async function sendGeneratorNotification(
     const res = await fetch(`${SERVICE_URL}/notify/send`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ collectorId, phone, text }),
+      body: JSON.stringify({ phone, text }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) return { ok: false, message: data?.message ?? `HTTP ${res.status}` };

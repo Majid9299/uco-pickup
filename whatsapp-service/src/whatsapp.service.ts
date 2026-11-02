@@ -217,11 +217,3 @@ export function resolveSessionDir(): string {
     ? path.resolve(process.env.WA_SESSION_DIR)
     : path.resolve(__dirname, "..", "data", "wa-session");
 }
-
-// مجلد أساس لجلسات إشعارات المجمّعين (جلسة فرعية لكل collectorId بداخله) —
-// لازم يكون على نفس الـ Volume الدائم في الإنتاج، وإلا تُفقد الجلسات بكل نشر
-export function resolveNotifySessionsBaseDir(): string {
-  return process.env.WA_NOTIFY_SESSIONS_DIR
-    ? path.resolve(process.env.WA_NOTIFY_SESSIONS_DIR)
-    : path.resolve(__dirname, "..", "data", "notify-sessions");
-}

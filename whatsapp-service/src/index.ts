@@ -1,8 +1,7 @@
 import express from "express";
 import cors from "cors";
-import { WhatsappService, resolveSessionDir, resolveNotifySessionsBaseDir } from "./whatsapp.service";
+import { WhatsappService, resolveSessionDir } from "./whatsapp.service";
 import { OtpService } from "./otp.service";
-import { NotifyManager } from "./notify.manager";
 
 // أهم إصلاح لمشكلة "الربط ينقطع": مكتبة Baileys ترمي أحيانًا أخطاء غير معالَجة
 // من داخل معالجات WebSocket (مثل "Timed Out" أثناء رفع مفاتيح ما قبل الاتصال)،
@@ -19,12 +18,13 @@ process.on("unhandledRejection", (reason) => {
 });
 
 const app = express();
+// خلف بروكسي Railway — حتى يكون req.ip عنوان المرسل الحقيقي لحدّ الرسائل
+app.set("trust proxy", 1);
 app.use(express.json());
 app.use(cors({ origin: process.env.ALLOWED_ORIGIN ?? "*" }));
 
 const whatsapp = new WhatsappService(resolveSessionDir());
 const otp = new OtpService();
-const notify = new NotifyManager(resolveNotifySessionsBaseDir());
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN ?? "change-me";
 
 function requireAdmin(req: express.Request, res: express.Response, next: express.NextFunction) {
@@ -76,32 +76,56 @@ app.post("/otp/send", async (req, res) => {
   }
 });
 
-// اتصال واتساب منفصل خاص بكل مجمّع، لإرسال إشعارات السحب لمولّديه —
-// مقصودًا بلا حماية ADMIN_TOKEN لأن لوحة المجمّع نفسها بدون تسجيل دخول
-// حقيقي بعد (نفس نمط بقية المشروع)، ومحمي فقط بتحديد أقصى عدد جلسات
-app.get("/notify/:collectorId/status", (req, res) => {
-  try {
-    res.json(notify.getStatus(req.params.collectorId));
-  } catch (err) {
-    res.status(429).json({ message: (err as Error).message });
-  }
-});
+// كل الإشعارات (للمولّد والمندوب والمجمّع) تُرسل من رقم الشركة الواحد المربوط
+// من لوحة الإدارة — أُلغي ربط رقم خاص لكل مجمّع (المالك 2026-11-02).
+// النقطة عامة لأن الموقع ثابت بلا سيرفر، فنحدّها حتى لا يُستغل رقم الشركة
+// في رسائل مزعجة: طول الرسالة، وعدد الرسائل لكل رقم ولكل IP في الساعة.
+const NOTIFY_MAX_TEXT = 1000;
+const NOTIFY_PER_PHONE_HOUR = 10;
+const NOTIFY_PER_IP_HOUR = 60;
+const HOUR_MS = 60 * 60 * 1000;
+const notifyHits = new Map<string, number[]>();
 
-app.post("/notify/:collectorId/logout", async (req, res) => {
-  await notify.logout(req.params.collectorId);
-  res.json({ ok: true });
-});
+function overLimit(key: string, max: number): boolean {
+  const now = Date.now();
+  const hits = (notifyHits.get(key) ?? []).filter((t) => now - t < HOUR_MS);
+  if (hits.length >= max) {
+    notifyHits.set(key, hits);
+    return true;
+  }
+  hits.push(now);
+  notifyHits.set(key, hits);
+  return false;
+}
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, hits] of notifyHits) {
+    if (hits.every((t) => now - t >= HOUR_MS)) notifyHits.delete(key);
+  }
+}, 10 * 60 * 1000);
 
 app.post("/notify/send", async (req, res) => {
-  const collectorId = String(req.body?.collectorId ?? "").trim();
-  const phone = String(req.body?.phone ?? "").trim();
+  const phone = String(req.body?.phone ?? "").replace(/[^\d]/g, "");
   const text = String(req.body?.text ?? "").trim();
-  if (!collectorId || !phone || !text) {
-    res.status(400).json({ message: "collectorId وphone وtext كلها مطلوبة" });
+  if (phone.length < 8 || phone.length > 15 || !text) {
+    res.status(400).json({ message: "رقم واتساب صحيح ونص الرسالة مطلوبان" });
+    return;
+  }
+  if (text.length > NOTIFY_MAX_TEXT) {
+    res.status(400).json({ message: "الرسالة أطول من المسموح" });
+    return;
+  }
+  if (overLimit(`ip:${req.ip}`, NOTIFY_PER_IP_HOUR) || overLimit(`phone:${phone}`, NOTIFY_PER_PHONE_HOUR)) {
+    res.status(429).json({ message: "تجاوزت عدد الرسائل المسموح في الساعة، حاول لاحقًا" });
+    return;
+  }
+  if (!whatsapp.getStatus().connected) {
+    res.status(503).json({ message: "رقم واتساب الشركة غير متصل حاليًا — راجع الإدارة" });
     return;
   }
   try {
-    await notify.sendText(collectorId, phone, text);
+    await whatsapp.sendText(phone, text);
     res.json({ ok: true });
   } catch (err) {
     res.status(502).json({ message: (err as Error).message });

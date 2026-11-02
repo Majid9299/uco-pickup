@@ -499,7 +499,7 @@ function CollectorDashboard({
       `تم استلام ${liters} لتر من الزيت المستخدم بسعر ${price} ر.ع/لتر — الإجمالي ${totalOMR} ر.ع. شكرًا لتعاونكم 🙏\n\nاستمارة نقل النفايات: ${link}`,
       `${liters} liters of used oil collected at ${price} OMR/L — Total ${totalOMR} OMR. Thank you! 🙏\n\nYour waste transfer note: ${link}`
     );
-    const result = await sendGeneratorNotification(collectorId, recipient, text);
+    const result = await sendGeneratorNotification(recipient, text);
     setNotifyResult(result.ok ? { ok: true, text } : { ok: false, message: result.message });
 
     // نسخة الكميات (بدون أسعار) تُرسل للمندوب المكلّف بالطلب — يطبعها من الطابعة المحمولة
@@ -508,7 +508,7 @@ function CollectorDashboard({
     if (repDriver?.whatsapp) {
       const repLink = `${invoiceUrl(request.id)}&copy=1`;
       const repText = `📋 استمارة الكميات للطباعة والختم — ${request.generatorName} (${liters} لتر):\n${repLink}`;
-      sendGeneratorNotification(collectorId, repDriver.whatsapp, repText);
+      sendGeneratorNotification(repDriver.whatsapp, repText);
     }
   }
 
@@ -538,7 +538,7 @@ function CollectorDashboard({
           href="/collector/settings"
           className="flex-1 rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-center text-sm font-bold text-neutral-700 active:scale-[0.98]"
         >
-          {t("⚙️ إدارة الواتساب", "⚙️ WhatsApp settings")}
+          {t("⚙️ الإعدادات", "⚙️ Settings")}
         </Link>
       </div>
 
@@ -606,15 +606,6 @@ function CollectorDashboard({
         </div>
         <span className="text-neutral-400">‹</span>
       </Link>
-
-      {!collector?.whatsapp && (
-        <div className="rounded-2xl border border-dashed border-amber-300 bg-amber-50 p-3 text-xs font-semibold text-amber-700">
-          {t(
-            "⚠️ ما أضفت رقم واتساب المجمّع بعد — أضفه من الإعدادات حتى تصل إشعارات التأكيد",
-            "⚠️ You haven't added a collector WhatsApp number yet — add it in Settings so confirmation notifications go out"
-          )}
-        </div>
-      )}
 
       <div className="rounded-2xl border border-neutral-200 bg-white p-4">
         <p className="mb-3 text-sm font-bold text-neutral-700">{t("طلبات السحب المعلّقة", "Pending pickup requests")}</p>
@@ -771,9 +762,7 @@ function CollectorDashboard({
             <p className="font-bold">
               {t("⚠️ ما انرسل إشعار واتساب:", "⚠️ WhatsApp notification failed to send:")} {notifyResult.message}
               {" — "}
-              <Link href="/collector/settings" className="underline">
-                {t("اربط رقمك من الإعدادات", "Link your number in Settings")}
-              </Link>
+              {t("راجع إدارة إنفير (رقم واتساب الشركة)", "Contact Invare admin (company WhatsApp number)")}
             </p>
           )}
         </div>

@@ -94,7 +94,7 @@ function RequestDetail({
     if (!generatorRecipient) return;
     setNotifying(true);
     const text = `🚚 المندوب في الطريق إليك الآن لاستلام الزيت المستخدم — ${generator?.name ?? ""}\n\n🚚 The representative is on the way to collect your used oil now.`;
-    await sendGeneratorNotification(request.collectorId, generatorRecipient, text);
+    await sendGeneratorNotification(generatorRecipient, text);
     setNotifying(false);
     setNotified(true);
   }
@@ -112,13 +112,13 @@ function RequestDetail({
     const repText = `📋 استمارة الكميات للطباعة والختم — ${request.generatorName} (${liters} لتر):\n${link}&copy=1`;
     await Promise.all([
       generatorRecipient
-        ? sendGeneratorNotification(request.collectorId, generatorRecipient, generatorText)
+        ? sendGeneratorNotification(generatorRecipient, generatorText)
         : Promise.resolve(),
       collector?.whatsapp
-        ? sendGeneratorNotification(request.collectorId, collector.whatsapp, collectorText)
+        ? sendGeneratorNotification(collector.whatsapp, collectorText)
         : Promise.resolve(),
       repDriver?.whatsapp
-        ? sendGeneratorNotification(request.collectorId, repDriver.whatsapp, repText)
+        ? sendGeneratorNotification(repDriver.whatsapp, repText)
         : Promise.resolve(),
     ]);
     setCompleting(false);
